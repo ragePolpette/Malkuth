@@ -3,10 +3,44 @@ import { createMemoryRecord } from "../contracts/memory-record.js";
 import { TriageService } from "../triage/triage-service.js";
 
 export class TriageAgent {
-  constructor({ contextAdapter, memoryAdapter }) {
+  constructor({ contextAdapter, memoryAdapter, sqlDbAdapter }) {
     this.contextAdapter = contextAdapter;
     this.memoryAdapter = memoryAdapter;
+    this.sqlDbAdapter = sqlDbAdapter;
     this.service = new TriageService();
+  }
+
+  async maybeRunDiagnostics(ticket) {
+    const request = ticket.diagnostics?.triage;
+    if (!request?.query && !request?.statement) {
+      return null;
+    }
+
+    return this.sqlDbAdapter.runDiagnosticQuery({
+      phase: "triage",
+      ticketKey: ticket.key,
+      ...request
+    });
+  }
+
+  applyDiagnostics(mapping, diagnostics) {
+    if (!diagnostics?.used) {
+      return mapping;
+    }
+
+    const hints = [...(mapping.hints ?? [])];
+    if (diagnostics.summary) {
+      hints.push(`SQL diagnostic: ${diagnostics.summary}`);
+    }
+
+    return {
+      ...mapping,
+      hints,
+      blockers: [...(mapping.blockers ?? []), ...(diagnostics.blockers ?? [])],
+      implementationHint: [mapping.implementationHint, diagnostics.summary]
+        .filter(Boolean)
+        .join(" | ")
+    };
   }
 
   async run(tickets) {
@@ -16,7 +50,11 @@ export class TriageAgent {
     const decisions = [];
 
     for (const ticket of tickets) {
-      const mapping = await this.contextAdapter.mapTicketToCodebase(ticket);
+      const diagnostics = await this.maybeRunDiagnostics(ticket);
+      const mapping = this.applyDiagnostics(
+        await this.contextAdapter.mapTicketToCodebase(ticket),
+        diagnostics
+      );
       const decision = this.service.evaluate(ticket, {
         prompt,
         mapping,

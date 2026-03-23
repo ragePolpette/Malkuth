@@ -44,7 +44,8 @@
       },
       "mcp": {
         "server": "llm-sql-db-mcp",
-        "enabled": false
+        "enabled": false,
+        "namespace": "bpopilot-ticket-harness"
       }
     },
     "bitbucket": {
@@ -91,6 +92,14 @@
         "feasibility": "feasible",
         "confidence": 0.9,
         "implementationHint": "Extend the harness triage pipeline for BpoPilot"
+      },
+      "diagnostics": {
+        "triage": {
+          "query": ""
+        },
+        "execution": {
+          "query": ""
+        }
       }
     },
     {

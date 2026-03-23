@@ -47,7 +47,8 @@ const defaultConfig = {
       },
       mcp: {
         server: "llm-sql-db-mcp",
-        enabled: false
+        enabled: false,
+        namespace: "bpopilot-ticket-harness"
       }
     },
     bitbucket: {

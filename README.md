@@ -109,12 +109,12 @@ Ogni adapter supporta una configurazione esplicita:
 - `kind: "mock"` per bootstrap, test e dry-run sicuri
 - `kind: "mcp"` per registrare il bridge verso l'MCP reale
 
-In questo STEP 2:
+In questo STEP 4:
 
 - gli adapter `mock` restano disponibili per bootstrap e test
 - Jira, `llm-context` e `llm-memory` hanno un path `mcp` reale via bridge configurabile
+- `llm-sql-db-mcp` e` disponibile come supporto diagnostico opzionale
 - il fallback file/mock resta esplicito in config
-- l'execution reale non e` ancora abilitata
 
 ## MCP Previsti
 
@@ -130,7 +130,7 @@ Durante il bootstrap:
 
 - la modalita' `mock` e' operativa
 - la modalita' `mcp` per Jira, `llm-context` e `llm-memory` e' operativa tramite bridge
-- `llm-sql-db-mcp` resta ancora mock in questo step
+- `llm-sql-db-mcp` e` disponibile ma solo su richiesta diagnostica
 - `llm-bitbucket-mcp` e` integrato sia in modalita` mock sia in modalita` MCP
 
 ## Config Example
@@ -155,6 +155,8 @@ Campi principali:
 - `execution.allowRealPrs`: deve restare `false` nel bootstrap
 - `execution.allowMerge`: deve restare `false`
 - `execution.workspaceRoot`: workspace locale configurabile per git/checkout
+- `adapters.llmSqlDb.mcp.enabled`: abilita il bridge DB solo quando serve
+- `adapters.llmSqlDb.mcp.namespace`: namespace diagnostico del harness
 - `mcpBridge.mode`: `fixture` oppure `external`
 - `mcpBridge.fixtureFile` o `mcpBridge.fixtures`: per test e bootstrap controllato
 - `mcpBridge.command` e `mcpBridge.args`: bridge reale per i server MCP
@@ -231,6 +233,7 @@ Scenario 1b, triage MCP:
 - usa `llm-context` via bridge MCP come fonte primaria
 - usa `llm-memory` come memoria primaria se configurato con `kind: "mcp"`
 - ripiega sul file store solo se `llmMemory.kind = "mock"`
+- usa `llm-sql-db-mcp` solo se il ticket richiede una query diagnostica
 
 Scenario 2, triage + execution:
 
@@ -248,6 +251,7 @@ Scenario 2c, execution MCP reale controllata:
 - crea commit e apre PR
 - parte solo se `execution.dryRun = false` e `execution.allowRealPrs = true`
 - si blocca subito se la config non e` coerente
+- usa `llm-sql-db-mcp` solo per diagnosi puntuali prima di procedere
 
 Scenario 2b, registry pronto per MCP:
 
@@ -271,16 +275,16 @@ Scenario 3, resume:
 
 ## Limiti Residui
 
-- `llm-sql-db-mcp` non e` ancora integrato davvero
-- prompt agent ancora placeholder in attesa dei prompt definitivi
+- i prompt agent sono maturi ma ancora non sono i prompt finali che inserirai tu
+- il DB e` usato solo on-demand, senza policy diagnostiche sofisticate
 - nessuna modifica reale a repository business
 - nessuna apertura PR reale per default
 - logging minimale, non ancora strutturato in sink esterni
 
 ## Miglioramenti Consigliati
 
-- sostituire i prompt placeholder con i prompt reali dei due agenti
-- collegare adapter reali a Jira, `llm-context`, `llm-memory`, `llm-sql-db-mcp`, `llm-bitbucket-mcp`
+- sostituire i prompt maturi correnti con i prompt reali definitivi dei due agenti
+- affinare le policy di uso diagnostico del DB per ridurre rumore e query inutili
 - aggiungere policy piu` fini per resume, retry e rate limiting
 - aggiungere audit log strutturato per ogni run
 - aggiungere fixture piu` ricche per ticket mock complessi

@@ -32,11 +32,13 @@ export async function runHarness({
 
   const triageAgent = new TriageAgent({
     contextAdapter,
-    memoryAdapter
+    memoryAdapter,
+    sqlDbAdapter
   });
   const executionAgent = new ExecutionAgent({
     bitbucketAdapter,
     memoryAdapter,
+    sqlDbAdapter,
     executionConfig: {
       ...config.execution,
       dryRun: executionDryRun

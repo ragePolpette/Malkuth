@@ -23,9 +23,11 @@ class FixtureMcpClient {
     return this.cache;
   }
 
-  async request({ server, action }) {
+  async request({ server, action, payload }) {
     const fixtures = await this.loadFixtures();
-    const key = `${server}.${action}`;
+    const baseKey = `${server}.${action}`;
+    const phaseKey = payload?.phase ? `${baseKey}.${payload.phase}` : null;
+    const key = phaseKey && phaseKey in fixtures ? phaseKey : baseKey;
     if (!(key in fixtures)) {
       throw new Error(`Missing MCP fixture response for ${key}`);
     }

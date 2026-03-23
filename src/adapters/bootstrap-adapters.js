@@ -58,7 +58,11 @@ export function buildAdapters({ config, logger }) {
     },
     llmSqlDb: {
       mock: () => new LlmSqlDbAdapter(config.adapters.llmSqlDb.mock),
-      mcp: () => new McpLlmSqlDbAdapter(config.adapters.llmSqlDb.mcp)
+      mcp: () =>
+        new McpLlmSqlDbAdapter({
+          ...config.adapters.llmSqlDb.mcp,
+          client: mcpClient
+        })
     },
     bitbucket: {
       mock: () =>

@@ -11,4 +11,22 @@ export class LlmSqlDbAdapter {
       stored: false
     };
   }
+
+  async runDiagnosticQuery(request) {
+    if (!request.query && !request.statement) {
+      return {
+        used: false,
+        source: "mock",
+        rows: [],
+        summary: ""
+      };
+    }
+
+    return {
+      used: true,
+      source: "mock",
+      rows: request.mockRows ?? [],
+      summary: request.mockSummary ?? "mock sql diagnostic executed"
+    };
+  }
 }

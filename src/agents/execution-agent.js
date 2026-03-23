@@ -2,12 +2,26 @@ import { loadPrompt } from "../prompts/load-prompt.js";
 import { ExecutionService } from "../execution/execution-service.js";
 
 export class ExecutionAgent {
-  constructor({ bitbucketAdapter, memoryAdapter, executionConfig, logger }) {
+  constructor({ bitbucketAdapter, memoryAdapter, sqlDbAdapter, executionConfig, logger }) {
     this.bitbucketAdapter = bitbucketAdapter;
     this.memoryAdapter = memoryAdapter;
+    this.sqlDbAdapter = sqlDbAdapter;
     this.executionConfig = executionConfig;
     this.logger = logger;
     this.service = new ExecutionService();
+  }
+
+  async maybeRunDiagnostics(ticket) {
+    const request = ticket.diagnostics?.execution;
+    if (!request?.query && !request?.statement) {
+      return null;
+    }
+
+    return this.sqlDbAdapter.runDiagnosticQuery({
+      phase: "execution",
+      ticketKey: ticket.key,
+      ...request
+    });
   }
 
   async run(items) {
@@ -85,13 +99,24 @@ export class ExecutionAgent {
     }
 
     const branchName = this.bitbucketAdapter.planBranch(ticket);
+    const diagnostics = await this.maybeRunDiagnostics(ticket);
+
+    if (diagnostics?.used && (diagnostics.shouldBlock || (diagnostics.blockers ?? []).length > 0)) {
+      return this.service.buildPlannedResult(
+        ticket,
+        "blocked",
+        diagnostics.summary || "execution blocked by SQL diagnostics"
+      );
+    }
 
     if (executionMode === "dry-run-mcp") {
       return {
         ...this.service.buildPlannedResult(
           ticket,
           "dry_run_planned",
-          "execution dry-run planned with MCP adapter; no real PR opened"
+          diagnostics?.summary
+            ? `execution dry-run planned with diagnostics: ${diagnostics.summary}`
+            : "execution dry-run planned with MCP adapter; no real PR opened"
         ),
         branchName,
         commitMessage: this.service.buildCommitMessage(ticket, prompt),

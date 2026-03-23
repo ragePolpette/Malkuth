@@ -38,13 +38,14 @@
       }
     },
     "llmSqlDb": {
-      "kind": "mock",
+      "kind": "mcp",
       "mock": {
         "recordRuns": true
       },
       "mcp": {
         "server": "llm-sql-db-mcp",
-        "enabled": false
+        "enabled": true,
+        "namespace": "bpopilot-ticket-harness"
       }
     },
     "bitbucket": {
