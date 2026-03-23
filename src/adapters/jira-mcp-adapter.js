@@ -1,10 +1,34 @@
 export class McpJiraAdapter {
   constructor(options = {}) {
     this.options = options;
+    this.client = options.client;
     this.kind = "mcp";
   }
 
+  normalizeTicket(ticket) {
+    return {
+      key: ticket.key,
+      projectKey: ticket.projectKey ?? ticket.project_key ?? ticket.project?.key ?? "UNKNOWN",
+      summary: ticket.summary,
+      scope: ticket.scope ?? "BpoPilot",
+      repoTarget: ticket.repoTarget ?? ticket.repo_target ?? "BPOFH",
+      contextMapping: ticket.contextMapping ?? ticket.context_mapping,
+      recheckConditions: ticket.recheckConditions ?? ticket.recheck_conditions ?? []
+    };
+  }
+
   async listOpenTickets() {
-    throw new Error("Jira MCP adapter is registered but not connected in STEP 1");
+    const action = this.options.filterId ? "searchTicketsByFilter" : "searchTicketsByJql";
+    const payload = this.options.filterId
+      ? { filterId: this.options.filterId }
+      : { jql: this.options.jql };
+    const response = await this.client.request({
+      server: this.options.server,
+      action,
+      payload
+    });
+
+    const tickets = Array.isArray(response?.tickets) ? response.tickets : response;
+    return tickets.map((ticket) => this.normalizeTicket(ticket));
   }
 }

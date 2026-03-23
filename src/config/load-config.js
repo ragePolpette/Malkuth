@@ -67,6 +67,13 @@ const defaultConfig = {
     allowRealPrs: false,
     allowMerge: false
   },
+  mcpBridge: {
+    mode: "fixture",
+    fixtureFile: "",
+    fixtures: {},
+    command: "",
+    args: []
+  },
   logging: {
     level: "info"
   },

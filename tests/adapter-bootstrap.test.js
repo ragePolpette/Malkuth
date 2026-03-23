@@ -62,6 +62,18 @@ function createConfig(overrides = {}) {
       baseBranch: "BPOFH",
       allowMerge: false
     },
+    mcpBridge: {
+      mode: "fixture",
+      fixtures: {
+        "jira-official.searchTicketsByJql": [],
+        "llm-context.mapTicketToCodebase": {},
+        "llm-memory.listTicketMemoryRecords": [],
+        "llm-memory.upsertTicketMemoryRecords": []
+      },
+      fixtureFile: "",
+      command: "",
+      args: []
+    },
     mockTickets: [],
     ...overrides
   };

@@ -8,6 +8,7 @@ import { LlmMemoryAdapter } from "./llm-memory-adapter.js";
 import { McpLlmMemoryAdapter } from "./llm-memory-mcp-adapter.js";
 import { LlmSqlDbAdapter } from "./llm-sql-db-adapter.js";
 import { McpLlmSqlDbAdapter } from "./llm-sql-db-mcp-adapter.js";
+import { createMcpClient } from "../mcp/create-mcp-client.js";
 import { FileMemoryStore } from "../memory/file-memory-store.js";
 
 function assertAdapterKind(name, adapterConfig) {
@@ -22,14 +23,26 @@ function resolveMemoryStore(config) {
 
 export function buildAdapters({ config, logger }) {
   const memoryStore = resolveMemoryStore(config);
+  const needsMcpClient = Object.values(config.adapters).some(
+    (adapterConfig) => adapterConfig.kind === "mcp"
+  );
+  const mcpClient = needsMcpClient ? createMcpClient(config.mcpBridge) : null;
   const definitions = {
     jira: {
       mock: () => new JiraAdapter({ tickets: config.mockTickets }),
-      mcp: () => new McpJiraAdapter(config.adapters.jira.mcp)
+      mcp: () =>
+        new McpJiraAdapter({
+          ...config.adapters.jira.mcp,
+          client: mcpClient
+        })
     },
     llmContext: {
       mock: () => new LlmContextAdapter(config.adapters.llmContext.mock),
-      mcp: () => new McpLlmContextAdapter(config.adapters.llmContext.mcp)
+      mcp: () =>
+        new McpLlmContextAdapter({
+          ...config.adapters.llmContext.mcp,
+          client: mcpClient
+        })
     },
     llmMemory: {
       mock: () =>
@@ -37,7 +50,11 @@ export function buildAdapters({ config, logger }) {
           ...config.adapters.llmMemory.mock,
           backend: config.memory.backend
         }),
-      mcp: () => new McpLlmMemoryAdapter(config.adapters.llmMemory.mcp)
+      mcp: () =>
+        new McpLlmMemoryAdapter({
+          ...config.adapters.llmMemory.mcp,
+          client: mcpClient
+        })
     },
     llmSqlDb: {
       mock: () => new LlmSqlDbAdapter(config.adapters.llmSqlDb.mock),

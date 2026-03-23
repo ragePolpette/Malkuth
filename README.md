@@ -1,6 +1,6 @@
 # BpoPilot Ticket Harness
 
-Harness autonomo per orchestrare triage ed execution di ticket BpoPilot con Codex come motore operativo, con bootstrap centralizzato degli adapter e supporto sia `mock` sia `mcp`. In questo step gli MCP reali sono registrati ma non ancora collegati operativamente.
+Harness autonomo per orchestrare triage ed execution di ticket BpoPilot con Codex come motore operativo, con bootstrap centralizzato degli adapter e supporto sia `mock` sia `mcp`. Il triage ora puo` lavorare sia in modalita` mock sia in modalita` MCP tramite un bridge configurabile.
 
 ## Obiettivo
 
@@ -70,7 +70,8 @@ bpopilot-ticket-harness/
 
 - [run-harness.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/orchestration/run-harness.js): entrypoint centrale. Carica config, usa la factory di bootstrap degli adapter, lancia triage e opzionalmente execution.
 - [bootstrap-adapters.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/adapters/bootstrap-adapters.js): registry centrale che seleziona adapter `mock` o `mcp` in base alla config.
-- [triage-agent.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/agents/triage-agent.js): legge memoria esistente, usa `llm-context` per il mapping ticket -> codebase e salva decisioni persistenti.
+- [triage-agent.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/agents/triage-agent.js): legge memoria esistente, usa `llm-context` come fonte primaria per il mapping ticket -> codebase e salva decisioni persistenti.
+- [create-mcp-client.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/mcp/create-mcp-client.js): bridge MCP generico, con modalita` `fixture` per test e `external` per integrazione reale.
 - [execution-agent.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/agents/execution-agent.js): esegue flow mock con branch da `BPOFH`, checkout, commit, PR simulata e guardrail anti-merge.
 - [memory-record.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/contracts/memory-record.js): contratto persistente del ticket memory layer.
 - [logger.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/logging/logger.js): logging minimale a livelli `silent`, `error`, `info`, `debug`.
@@ -108,11 +109,12 @@ Ogni adapter supporta una configurazione esplicita:
 - `kind: "mock"` per bootstrap, test e dry-run sicuri
 - `kind: "mcp"` per registrare il bridge verso l'MCP reale
 
-In questo STEP 1:
+In questo STEP 2:
 
-- gli adapter `mock` restano quelli attivi e testati
-- gli adapter `mcp` esistono come stub registrati nella factory
-- se selezionati, falliscono esplicitamente con un errore chiaro invece di eseguire chiamate reali
+- gli adapter `mock` restano disponibili per bootstrap e test
+- Jira, `llm-context` e `llm-memory` hanno un path `mcp` reale via bridge configurabile
+- il fallback file/mock resta esplicito in config
+- l'execution reale non e` ancora abilitata
 
 ## MCP Previsti
 
@@ -127,12 +129,16 @@ Il progetto e` strutturato per integrare questi MCP:
 Durante il bootstrap:
 
 - la modalita' `mock` e' operativa
-- la modalita' `mcp` e' descritta e registrata
-- nessuna chiamata MCP reale e' ancora implementata
+- la modalita' `mcp` per Jira, `llm-context` e `llm-memory` e' operativa tramite bridge
+- `llm-sql-db-mcp` e `llm-bitbucket-mcp` restano ancora mock in questo step
 
 ## Config Example
 
 Il file di esempio e` [harness.config.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/config/harness.config.example.json).
+
+Esempio separato per triage MCP:
+
+- [harness.config.mcp.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/config/harness.config.mcp.example.json)
 
 Campi principali:
 
@@ -145,6 +151,9 @@ Campi principali:
 - `execution.baseBranch`: branch base, richiesto `BPOFH`
 - `execution.allowRealPrs`: deve restare `false` nel bootstrap
 - `execution.allowMerge`: deve restare `false`
+- `mcpBridge.mode`: `fixture` oppure `external`
+- `mcpBridge.fixtureFile` o `mcpBridge.fixtures`: per test e bootstrap controllato
+- `mcpBridge.command` e `mcpBridge.args`: bridge reale per i server MCP
 - `logging.level`: `silent`, `error`, `info`, `debug`
 - `mockTickets`: dataset locale per bootstrap e test
 
@@ -156,6 +165,12 @@ Solo triage:
 
 ```bash
 node src/cli.js triage --config ./config/harness.config.example.json --dry-run
+```
+
+Solo triage in modalita` MCP:
+
+```bash
+node src/cli.js triage --config ./config/harness.config.mcp.example.json --dry-run
 ```
 
 Triage + execution:
@@ -198,6 +213,13 @@ Scenario 1, solo triage:
 - usa `llm-context` mock per decidere scope e fattibilita`
 - produce un triage report leggibile
 
+Scenario 1b, triage MCP:
+
+- legge ticket da Jira tramite JQL o filtro configurato
+- usa `llm-context` via bridge MCP come fonte primaria
+- usa `llm-memory` come memoria primaria se configurato con `kind: "mcp"`
+- ripiega sul file store solo se `llmMemory.kind = "mock"`
+
 Scenario 2, triage + execution:
 
 - seleziona ticket `feasible`
@@ -229,7 +251,7 @@ Scenario 3, resume:
 
 ## Limiti Residui
 
-- adapter MCP registrati ma non ancora collegati ai servizi reali
+- `llm-sql-db-mcp` e `llm-bitbucket-mcp` non sono ancora integrati davvero
 - prompt agent ancora placeholder in attesa dei prompt definitivi
 - nessuna modifica reale a repository business
 - nessuna apertura PR reale

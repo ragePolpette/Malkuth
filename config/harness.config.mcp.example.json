@@ -1,5 +1,5 @@
 {
-  "mode": "triage-and-execution",
+  "mode": "triage-only",
   "dryRun": true,
   "memory": {
     "backend": "file",
@@ -7,7 +7,7 @@
   },
   "adapters": {
     "jira": {
-      "kind": "mock",
+      "kind": "mcp",
       "mock": {
         "ticketSource": "config.mockTickets"
       },
@@ -18,7 +18,7 @@
       }
     },
     "llmContext": {
-      "kind": "mock",
+      "kind": "mcp",
       "mock": {
         "mappingSource": "ticket.contextMapping"
       },
@@ -28,7 +28,7 @@
       }
     },
     "llmMemory": {
-      "kind": "mock",
+      "kind": "mcp",
       "mock": {
         "backend": "file"
       },
@@ -65,42 +65,14 @@
     "allowMerge": false
   },
   "mcpBridge": {
-    "mode": "fixture",
+    "mode": "external",
     "fixtureFile": "",
     "fixtures": {},
-    "command": "",
+    "command": "your-mcp-bridge-command",
     "args": []
   },
   "logging": {
     "level": "info"
   },
-  "mockTickets": [
-    {
-      "key": "BPO-100",
-      "projectKey": "BPO",
-      "summary": "Bootstrap harness dry-run skeleton",
-      "scope": "BpoPilot",
-      "repoTarget": "BPOFH",
-      "contextMapping": {
-        "inScope": true,
-        "repoTarget": "BPOFH",
-        "feasibility": "feasible",
-        "confidence": 0.9,
-        "implementationHint": "Extend the harness triage pipeline for BpoPilot"
-      }
-    },
-    {
-      "key": "OPS-7",
-      "projectKey": "OPS",
-      "summary": "Upgrade unrelated infra bootstrap",
-      "scope": "Other",
-      "repoTarget": "OPS",
-      "contextMapping": {
-        "inScope": false,
-        "repoTarget": "OPS",
-        "feasibility": "feasible",
-        "confidence": 0.1
-      }
-    }
-  ]
+  "mockTickets": []
 }
