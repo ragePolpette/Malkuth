@@ -17,7 +17,7 @@ Il bootstrap corrente non richiede ticket reali, non apre PR reali sui repositor
 ## Struttura Finale
 
 ```text
-bpopilot-ticket-harness/
+Malkuth/
 ├─ config/
 │  ├─ harness.config.example.json
 │  ├─ harness.config.mcp.example.json
@@ -76,13 +76,13 @@ bpopilot-ticket-harness/
 
 ## Architettura Operativa
 
-- [run-harness.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/orchestration/run-harness.js): entrypoint centrale. Carica config, usa la factory di bootstrap degli adapter, lancia triage e opzionalmente execution.
-- [bootstrap-adapters.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/adapters/bootstrap-adapters.js): registry centrale che seleziona adapter `mock` o `mcp` in base alla config.
-- [triage-agent.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/agents/triage-agent.js): legge memoria esistente, usa `llm_context` come fonte primaria per il mapping ticket -> codebase e salva decisioni persistenti.
-- [create-mcp-client.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/mcp/create-mcp-client.js): bridge MCP generico, con modalita` `fixture` per test e `external` per integrazione reale.
-- [execution-agent.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/agents/execution-agent.js): esegue flow mock o reale via `llm_bitbucket_mcp`, con guardrail su `enabled`, `dryRun`, `allowRealPrs`, anti-merge e riuso di PR gia` aperte.
-- [memory-record.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/contracts/memory-record.js): contratto persistente del ticket memory layer.
-- [logger.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/logging/logger.js): logging minimale a livelli `silent`, `error`, `info`, `debug`.
+- [run-harness.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/orchestration/run-harness.js): entrypoint centrale. Carica config, usa la factory di bootstrap degli adapter, lancia triage e opzionalmente execution.
+- [bootstrap-adapters.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/adapters/bootstrap-adapters.js): registry centrale che seleziona adapter `mock` o `mcp` in base alla config.
+- [triage-agent.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/agents/triage-agent.js): legge memoria esistente, usa `llm_context` come fonte primaria per il mapping ticket -> codebase e salva decisioni persistenti.
+- [create-mcp-client.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/mcp/create-mcp-client.js): bridge MCP generico, con modalita` `fixture` per test e `external` per integrazione reale.
+- [execution-agent.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/agents/execution-agent.js): esegue flow mock o reale via `llm_bitbucket_mcp`, con guardrail su `enabled`, `dryRun`, `allowRealPrs`, anti-merge e riuso di PR gia` aperte.
+- [memory-record.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/contracts/memory-record.js): contratto persistente del ticket memory layer.
+- [logger.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/logging/logger.js): logging minimale a livelli `silent`, `error`, `info`, `debug`.
 
 ## Contratto Memoria
 
@@ -144,11 +144,11 @@ In questo STEP 4:
 
 Il progetto e` strutturato per integrare questi MCP:
 
-- Jira/Confluence tramite server `atlassian_rovo_mcp` e [jira-adapter.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/adapters/jira-adapter.js)
-- `llm_context` tramite [llm-context-adapter.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/adapters/llm-context-adapter.js)
-- `llm_memory` tramite [llm-memory-adapter.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/adapters/llm-memory-adapter.js)
-- `llm_db_prod_mcp` / `llm_db_dev_mcp` tramite [llm-sql-db-adapter.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/adapters/llm-sql-db-adapter.js)
-- `llm_bitbucket_mcp` tramite [bitbucket-adapter.js](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/src/adapters/bitbucket-adapter.js)
+- Jira/Confluence tramite server `atlassian_rovo_mcp` e [jira-adapter.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/adapters/jira-adapter.js)
+- `llm_context` tramite [llm-context-adapter.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/adapters/llm-context-adapter.js)
+- `llm_memory` tramite [llm-memory-adapter.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/adapters/llm-memory-adapter.js)
+- `llm_db_prod_mcp` / `llm_db_dev_mcp` tramite [llm-sql-db-adapter.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/adapters/llm-sql-db-adapter.js)
+- `llm_bitbucket_mcp` tramite [bitbucket-adapter.js](C:/Users/Gianmarco/Urgewalt/Malkuth/src/adapters/bitbucket-adapter.js)
 
 Durante il bootstrap:
 
@@ -160,7 +160,7 @@ Durante il bootstrap:
 
 ## Quick Start Mock
 
-1. usa [harness.config.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/config/harness.config.example.json)
+1. usa [harness.config.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/config/harness.config.example.json)
 2. esegui solo triage:
 
 ```bash
@@ -175,8 +175,8 @@ node src/cli.js run --config ./config/harness.config.example.json --dry-run
 
 ## Quick Start MCP Reale Controllato
 
-1. parti da [harness.config.mcp.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/config/harness.config.mcp.example.json) per triage MCP
-2. parti da [harness.config.real.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/config/harness.config.real.example.json) per execution MCP reale controllata
+1. parti da [harness.config.mcp.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/config/harness.config.mcp.example.json) per triage MCP
+2. parti da [harness.config.real.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/config/harness.config.real.example.json) per execution MCP reale controllata
 3. configura `mcpBridge.command` e `mcpBridge.args`
 4. verifica che `execution.allowMerge = false`
 5. usa `--real-run` solo quando vuoi davvero disattivare il dry-run
@@ -195,12 +195,12 @@ node src/cli.js execute --config ./config/harness.config.real.example.json --rea
 
 ## Config Example
 
-Il file di esempio e` [harness.config.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/config/harness.config.example.json).
+Il file di esempio e` [harness.config.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/config/harness.config.example.json).
 
 Esempio separato per triage MCP:
 
-- [harness.config.mcp.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/config/harness.config.mcp.example.json)
-- [harness.config.real.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/config/harness.config.real.example.json)
+- [harness.config.mcp.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/config/harness.config.mcp.example.json)
+- [harness.config.real.example.json](C:/Users/Gianmarco/Urgewalt/Malkuth/config/harness.config.real.example.json)
 
 Campi principali:
 
@@ -254,7 +254,7 @@ Per il DB MCP ci sono due modalita' equivalenti:
 
 Il codice del harness non deve assumere quale delle due topologie sia attiva.
 
-Per i ticket reali passati da assistenza al tecnico, usare il template in [ticket-handoff-template.md](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/docs/ticket-handoff-template.md) e rendere sempre esplicito il target `legacy`, `fatturhello` o `fiscobot`.
+Per i ticket reali passati da assistenza al tecnico, usare il template in [ticket-handoff-template.md](C:/Users/Gianmarco/Urgewalt/Malkuth/harness-docs/ticket-handoff-template.md) e rendere sempre esplicito il target `legacy`, `fatturhello` o `fiscobot`.
 
 ## Comandi Principali
 
@@ -304,7 +304,7 @@ Resume con memoria esistente:
 node src/cli.js triage --config ./config/harness.config.example.json --dry-run
 ```
 
-Il resume usa [memory.json](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/data/memory.json) per evitare rivalutazioni inutili e loop sui ticket gia` rifiutati, bloccati o gia` in lavorazione.
+Il resume usa [memory.json](C:/Users/Gianmarco/Urgewalt/Malkuth/data/memory.json) per evitare rivalutazioni inutili e loop sui ticket gia` rifiutati, bloccati o gia` in lavorazione.
 
 Help CLI:
 
@@ -387,7 +387,7 @@ Per rendere i ticket facilmente implementabili:
 
 Template pronto all'uso:
 
-- [ticket-handoff-template.md](C:/Users/Gianmarco/Urgewalt/Malkuth/bpopilot-ticket-harness/docs/ticket-handoff-template.md)
+- [ticket-handoff-template.md](C:/Users/Gianmarco/Urgewalt/Malkuth/harness-docs/ticket-handoff-template.md)
 
 ## Readiness Review
 
