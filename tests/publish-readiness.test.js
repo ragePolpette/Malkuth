@@ -8,6 +8,7 @@ import {
   renderPublishReadinessReport,
   runPublishReadinessReview
 } from "../src/review/publish-readiness.js";
+import { resolveWorkspaceRootForChecks } from "../src/review/resolve-check-workspace.js";
 
 async function createWorkspace() {
   const workspace = await mkdtemp(path.join(os.tmpdir(), "malkuth-publish-review-"));
@@ -104,4 +105,25 @@ test("publish readiness review fails when docs still mention env workflow", asyn
         /forbidden pattern present/i.test(check.details)
     )
   );
+});
+
+test("check workspace resolution prefers configured workspace roots before cwd", async () => {
+  const workspace = await createWorkspace();
+  const alternateWorkspace = await mkdtemp(path.join(os.tmpdir(), "malkuth-check-workspace-"));
+
+  const resolved = await resolveWorkspaceRootForChecks(
+    {
+      verification: {
+        sensitiveScan: {
+          workspaceRoot: path.join(alternateWorkspace, "missing")
+        }
+      },
+      execution: {
+        workspaceRoot: workspace
+      }
+    },
+    alternateWorkspace
+  );
+
+  assert.equal(resolved, workspace);
 });

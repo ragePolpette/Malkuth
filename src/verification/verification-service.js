@@ -1,5 +1,6 @@
 import { assertVerificationStatus } from "../contracts/harness-contracts.js";
 import { execFile } from "node:child_process";
+import path from "node:path";
 import { promisify } from "node:util";
 import { scanWorkspace } from "../security/public-hygiene.js";
 
@@ -46,6 +47,11 @@ function parseGitStatusPaths(stdout) {
 function normalizeStatus(status) {
   assertVerificationStatus(status);
   return status;
+}
+
+function isPathInside(basePath, candidatePath) {
+  const relativePath = path.relative(basePath, candidatePath);
+  return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
 }
 
 export class VerificationService {
@@ -212,6 +218,8 @@ export class VerificationService {
   }
 
   async runPreflightCommands({ item, workspaceRoot, payload }) {
+    const resolvedWorkspaceRoot = path.resolve(workspaceRoot);
+
     for (const command of this.config.preflightCommands) {
       if (command?.enabled === false) {
         continue;
@@ -233,8 +241,21 @@ export class VerificationService {
       }
 
       try {
+        const resolvedCommandCwd = command.cwd
+          ? path.resolve(resolvedWorkspaceRoot, command.cwd)
+          : resolvedWorkspaceRoot;
+
+        if (!isPathInside(resolvedWorkspaceRoot, resolvedCommandCwd)) {
+          return this.buildResult(
+            item,
+            "blocked",
+            `preflight command cwd escapes workspace root (${label})`,
+            payload
+          );
+        }
+
         await execFileAsync(command.command, args, {
-          cwd: command.cwd ? workspaceRoot : workspaceRoot,
+          cwd: resolvedCommandCwd,
           windowsHide: true
         });
       } catch (error) {

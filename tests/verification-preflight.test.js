@@ -284,3 +284,143 @@ test("preflight blocks execution when the command is outside the allowlist", asy
   assert.equal(summary.execution[0].status, "blocked");
   assert.match(summary.execution[0].reason, /not allowed by policy/i);
 });
+
+test("preflight executes commands in the configured workspace subdirectory", async () => {
+  const workspace = await mkdtemp(path.join(os.tmpdir(), "malkuth-preflight-cwd-"));
+  const configPath = path.join(workspace, "harness.config.json");
+  await initGitWorkspace(workspace);
+  await mkdir(path.join(workspace, "checks"), { recursive: true });
+  await writeFile(path.join(workspace, "checks", "marker.txt"), "ok\n");
+
+  const config = {
+    mode: "triage-and-execution",
+    dryRun: true,
+    memory: {
+      backend: "file",
+      filePath: "./memory.json"
+    },
+    execution: {
+      enabled: true,
+      dryRun: true,
+      baseBranch: "main",
+      allowRealPrs: false,
+      allowMerge: false,
+      workspaceRoot: workspace
+    },
+    verification: {
+      enabled: true,
+      minConfidence: 0.75,
+      maxCommitMessageLength: 120,
+      maxPullRequestTitleLength: 120,
+      allowedPathPrefixesByRepo: {},
+      preflightCommands: [
+        {
+          label: "cwd-check",
+          command: process.execPath,
+          args: [
+            "-e",
+            "import { accessSync } from 'node:fs'; accessSync('marker.txt');"
+          ],
+          cwd: "checks"
+        }
+      ],
+      sensitiveScan: {
+        enabled: false
+      }
+    },
+    mockTickets: [
+      {
+        key: "GEN-704",
+        projectKey: "GEN",
+        summary: "Configured cwd check",
+        productTarget: "legacy",
+        repoTarget: "core-app",
+        contextMapping: {
+          inScope: true,
+          repoTarget: "core-app",
+          feasibility: "feasible",
+          confidence: 0.95
+        }
+      }
+    ]
+  };
+
+  await writeFile(configPath, JSON.stringify(config, null, 2));
+
+  const summary = await runHarness({
+    configPath,
+    modeOverride: "triage-and-execution",
+    dryRunOverride: true
+  });
+
+  assert.equal(summary.execution.length, 1);
+  assert.notEqual(summary.execution[0].status, "blocked");
+});
+
+test("preflight blocks execution when command cwd escapes the workspace root", async () => {
+  const workspace = await mkdtemp(path.join(os.tmpdir(), "malkuth-preflight-cwd-escape-"));
+  const configPath = path.join(workspace, "harness.config.json");
+  await initGitWorkspace(workspace);
+
+  const config = {
+    mode: "triage-and-execution",
+    dryRun: true,
+    memory: {
+      backend: "file",
+      filePath: "./memory.json"
+    },
+    execution: {
+      enabled: true,
+      dryRun: true,
+      baseBranch: "main",
+      allowRealPrs: false,
+      allowMerge: false,
+      workspaceRoot: workspace
+    },
+    verification: {
+      enabled: true,
+      minConfidence: 0.75,
+      maxCommitMessageLength: 120,
+      maxPullRequestTitleLength: 120,
+      allowedPathPrefixesByRepo: {},
+      preflightCommands: [
+        {
+          label: "escaping-cwd-check",
+          command: process.execPath,
+          args: ["-e", "process.exit(0)"],
+          cwd: ".."
+        }
+      ],
+      sensitiveScan: {
+        enabled: false
+      }
+    },
+    mockTickets: [
+      {
+        key: "GEN-705",
+        projectKey: "GEN",
+        summary: "Escaping cwd check",
+        productTarget: "legacy",
+        repoTarget: "core-app",
+        contextMapping: {
+          inScope: true,
+          repoTarget: "core-app",
+          feasibility: "feasible",
+          confidence: 0.95
+        }
+      }
+    ]
+  };
+
+  await writeFile(configPath, JSON.stringify(config, null, 2));
+
+  const summary = await runHarness({
+    configPath,
+    modeOverride: "triage-and-execution",
+    dryRunOverride: true
+  });
+
+  assert.equal(summary.execution.length, 1);
+  assert.equal(summary.execution[0].status, "blocked");
+  assert.match(summary.execution[0].reason, /cwd escapes workspace root/i);
+});
