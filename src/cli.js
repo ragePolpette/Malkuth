@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { access } from "node:fs/promises";
 import { runHarness } from "./orchestration/run-harness.js";
 import { loadConfig } from "./config/load-config.js";
 import { renderPublishReadinessReport, runPublishReadinessReview } from "./review/publish-readiness.js";
+import { resolveWorkspaceRootForChecks } from "./review/resolve-check-workspace.js";
 import { renderScanReport, scanWorkspace } from "./security/public-hygiene.js";
 
 function parseArgs(argv) {
@@ -110,25 +110,6 @@ function renderSummary(summary) {
   return summary.finalReport;
 }
 
-async function resolveWorkspaceRootForChecks(config) {
-  const candidates = [
-    config.verification?.sensitiveScan?.workspaceRoot,
-    process.cwd(),
-    config.execution.workspaceRoot
-  ].filter(Boolean);
-
-  for (const candidate of candidates) {
-    try {
-      await access(candidate);
-      return candidate;
-    } catch {
-      // try the next candidate
-    }
-  }
-
-  return process.cwd();
-}
-
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
@@ -138,7 +119,7 @@ async function main() {
 
   if (options.command === "audit") {
     const config = await loadConfig(options.configPath);
-    const workspaceRoot = await resolveWorkspaceRootForChecks(config);
+    const workspaceRoot = await resolveWorkspaceRootForChecks(config, process.cwd());
     const result = await scanWorkspace(workspaceRoot, {
       ...config.verification?.sensitiveScan,
       enabled: true
@@ -152,7 +133,7 @@ async function main() {
 
   if (options.command === "review") {
     const config = await loadConfig(options.configPath);
-    const workspaceRoot = await resolveWorkspaceRootForChecks(config);
+    const workspaceRoot = await resolveWorkspaceRootForChecks(config, process.cwd());
     const result = await runPublishReadinessReview(workspaceRoot, config.verification?.sensitiveScan);
     console.log(renderPublishReadinessReport(result));
     if (result.status !== "passed") {
