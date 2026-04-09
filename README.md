@@ -1,39 +1,41 @@
 # Malkuth
 
-Malkuth e` un harness locale per triage, verifica ed execution controllata di ticket tecnici.
+`Malkuth` is a local-first harness for triage, verification, and controlled execution of technical work items.
 
-Il progetto e` pensato per:
+It is designed for environments where an agentic workflow should not jump directly from “ticket received” to “code changed” without policy checks, scoped execution rules, and optional human confirmation.
 
-- uso personale o di team in workstation controllate
-- integrazione locale con adapter `mock` o `mcp`
-- portfolio tecnico pubblico, senza valori sensibili nel repository
+## What It Does
 
-Il progetto non e` pensato per:
+The runtime is built to:
 
-- deploy pubblico come servizio esposto
-- utilizzo out-of-the-box contro tenant o repository reali
-- eseguire merge automatici o azioni irreversibili senza policy locali esplicite
+1. read work items from a configured source
+2. map the request to a product and repository target
+3. reuse optional operational memory and semantic retrieval
+4. verify payloads, changed paths, command preflight, and public hygiene
+5. pause for human clarification when confidence is not high enough
+6. execute branch, commit, and pull request steps only when policy allows it
 
-## Scopo
+## Why It Exists
 
-Il flow coperto dal tool e` questo:
+Many “ticket-to-code” automation flows are unsafe because they collapse triage, policy, and execution into one step.
 
-1. leggere ticket da una sorgente configurata
-2. mappare il ticket verso target prodotto e codebase
-3. riusare memoria operativa e memoria semantica opzionale
-4. verificare policy, payload, path, comandi e hygiene pubblica
-5. eseguire branch, commit e PR solo se il trust level e la config locale lo consentono
+`Malkuth` separates those concerns into explicit stages:
 
-## Architettura
+- triage
+- verification
+- execution
+- reporting
 
-Diagramma logico:
+The goal is not autonomous merge automation. The goal is a controlled local harness for serious engineering workflows.
+
+## Architecture
 
 ```text
 Ticket source
   -> Jira adapter (mock | mcp)
   -> TriageAgent
        -> llm-context adapter
-       -> ticket memory file
+       -> ticket memory
        -> llm-memory adapter
        -> optional SQL diagnostics
   -> VerificationAgent
@@ -41,6 +43,7 @@ Ticket source
        -> path policy
        -> command preflight
        -> public hygiene scan
+       -> optional human clarification loop
   -> ExecutionAgent
        -> bitbucket adapter (mock | mcp)
        -> optional SQL diagnostics
@@ -51,152 +54,81 @@ Ticket source
        -> audit trail
 ```
 
-Struttura principale:
+Main areas:
 
-- `src/orchestration/run-harness.js`: orchestration centrale del run
-- `src/adapters/`: adapter runtime, separati tra blocchi generici e enterprise-oriented
-- `src/agents/`: `TriageAgent`, `VerificationAgent`, `ExecutionAgent`
-- `src/mcp/`: bridge MCP, registry parsing e client wrapper
-- `src/security/`: scanner public hygiene e redaction
-- `src/reporting/`: report finale strutturato
-- `config/`: example pubblicabili e guida alla config locale
+- `src/orchestration/`: top-level run orchestration
+- `src/adapters/`: runtime adapters and external integration boundaries
+- `src/agents/`: triage, verification, and execution stages
+- `src/mcp/`: MCP bridge and registry/client glue
+- `src/security/`: public hygiene scanning and redaction
+- `src/logging/`: structured run logging
+- `src/reporting/`: final report generation
+- `config/`: publishable example configurations plus local setup guidance
 
-## Sicurezza
+## Safety Model
 
-Guardrail attivi nel runtime:
+Guard rails in the runtime include:
 
-- `allowMerge` resta bloccato
-- `allowRealPrs` deve essere esplicitamente abilitato
-- `trustLevel` distingue `mock`, `mcp-readonly`, `mcp-write`
-- allowlist per repository, branch base, comandi e action MCP
-- scanner su stringhe sensibili e placeholder safety degli example
-- redaction su report, log e memoria semantica
+- `allowMerge` blocked by default
+- `allowRealPrs` requiring explicit enablement
+- trust-level separation between `mock`, `mcp-readonly`, and `mcp-write`
+- allowlists for repositories, base branches, commands, and MCP actions
+- public-hygiene scanning for sensitive strings and placeholder safety
+- redaction across reports, logs, and semantic memory
+- deferred human-in-the-loop interaction when confidence is insufficient
 
-Non-obiettivi:
+## Local Run
 
-- deploy automatico
-- merge automatico
-- ticket closing automatico
-- memorizzazione nel repo di tenant, cloudId, path locali, namespace reali o segreti
-
-## Quick Start
-
-Prerequisiti:
+Requirements:
 
 - Node.js 22+
-- config locale derivata dagli example in `config/`
+- local configuration derived from the example files in `config/`
 
-Installazione:
+Install:
 
 ```bash
 npm install
 ```
 
-Triage mock:
+Common flows:
 
 ```bash
 node src/cli.js triage --config ./config/harness.config.example.json --dry-run
-```
-
-Run completo mock:
-
-```bash
 node src/cli.js run --config ./config/harness.config.example.json --dry-run
-```
-
-Audit pubblico:
-
-```bash
 node src/cli.js audit --config ./config/harness.config.example.json
-```
-
-Review finale di publish-readiness:
-
-```bash
 node src/cli.js review --config ./config/harness.config.example.json
+node src/cli.js questions --config ./config/harness.config.example.json
+node src/cli.js monitor --config ./config/harness.config.example.json --limit 20
 ```
 
-Report finale:
+## Configuration
 
-```bash
-node src/cli.js execute --config ./config/harness.config.example.json --dry-run --report final
-```
-
-## Configurazione Locale
-
-Gli example tracciati sono pubblicabili:
+Publishable example configs:
 
 - `config/harness.config.example.json`
 - `config/harness.config.mcp.example.json`
 - `config/harness.config.real.example.json`
 - `config/harness.config.triage.codex-local.example.json`
 
-I valori reali devono stare in file locali non tracciati, per esempio:
+Real values should stay in local untracked files such as:
 
 - `config/local/harness.local.json`
 - `config/local/harness.mcp.local.json`
 - `config/local/harness.real.local.json`
 - `config/codex.mcp.local.toml`
 
-Guida dettagliata:
+The repository is explicitly meant to stay free of:
 
-- `config/LOCAL_CONFIGURATION.md`
+- local paths
+- real tenant identifiers
+- real repository and branch names
+- secret material
+- real MCP bridge command lines
 
-Valori da tenere sempre fuori repo:
+## Project Status
 
-- path locali
-- repository e branch reali
-- cloudId, tenant, namespace
-- SQL di persistenza del run log
-- command line del bridge MCP reale
+This repository is in active development. The current runtime already demonstrates the intended architecture and safety model, but the project is still evolving and should be treated as an active engineering harness rather than a finished product.
 
-Autenticazione locale:
+## Development Process
 
-- non usare file `.env`
-- non usare `.env.local`
-- passa le chiavi al lancio del `.ps1`
-- oppure gestiscile dalla dashboard locale `C:\Users\Gianmarco\Urgewalt\Yetzirah\mcp-dashboard`
-
-## Workflow Enterprise Locale
-
-Flow consigliato:
-
-1. configura gli adapter reali in file locali non tracciati
-2. usa `mcp-readonly` per validare il triage e la verification
-3. abilita `mcp-write` solo sul repository consentito e sul branch base consentito
-4. lascia `allowMerge = false`
-5. usa il report finale e l'audit trail come output del run
-
-## Esempio End-To-End
-
-Esempio di flusso:
-
-1. Jira adapter legge un ticket aperto
-2. `TriageAgent` assegna `productTarget`, `repoTarget`, fattibilita` e hint
-3. `VerificationAgent` controlla confidenza, naming, path cambiati, preflight e hygiene
-4. `ExecutionAgent` crea branch, commit e PR solo se il verdetto e` `approved`
-5. il run produce `triageReport`, `executionReport`, `finalReport` e `auditTrail`
-
-## Comandi
-
-```bash
-node src/cli.js --help
-node src/cli.js triage --config ./config/harness.config.example.json --dry-run
-node src/cli.js run --config ./config/harness.config.example.json --dry-run
-node src/cli.js execute --config ./config/harness.config.real.example.json --real-run --report execution
-node src/cli.js audit --config ./config/harness.config.example.json
-node src/cli.js review --config ./config/harness.config.example.json
-node --test
-```
-
-## Stato
-
-Attuale direzione del progetto:
-
-- runtime locale strutturato
-- verification gate introdotto
-- bridge MCP indurito con retry, timeout e failure mode testabili
-- config sensibile esternalizzata
-- final report e audit trail disponibili
-
-Verifica completa e pubblicazione finale restano separate e vanno eseguite alla fine del batch di sviluppo.
+Built with AI-assisted workflows, while architecture, tradeoffs, integration, review, and validation were directed by the author.
