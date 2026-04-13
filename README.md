@@ -15,6 +15,8 @@ The best feature in the runtime is the human-in-the-loop clarification flow:
 
 This makes the workflow much more realistic than a simple "ticket in, PR out" demo. The system is designed to stop when confidence is not high enough, ask, wait, resume, and remember.
 
+A short transcript of that flow lives in [DEMO.md](./DEMO.md).
+
 ## What It Does
 
 The runtime is built to:
@@ -56,6 +58,8 @@ Typical flow:
 7. useful answers are captured into ticket memory and semantic memory
 
 This behavior is implemented in the interaction layer under `src/interaction/`.
+
+For a compact example of the full Slack -> answer -> resume -> memory loop, see [DEMO.md](./DEMO.md).
 
 ## Architecture
 
