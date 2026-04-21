@@ -29,6 +29,7 @@ test("ollama runtime provider sends an OpenAI-compatible local request without a
 
     const payload = JSON.parse(body);
     assert.equal(payload.model, "qwen2.5-coder");
+    assert.equal(payload.max_tokens, 444);
     assert.equal(payload.response_format.type, "json_object");
 
     res.writeHead(200, { "content-type": "application/json" });
@@ -68,7 +69,8 @@ test("ollama runtime provider sends an OpenAI-compatible local request without a
           ollama: {
             baseUrl,
             endpoint: "/chat/completions",
-            timeoutMs: 5000
+            timeoutMs: 5000,
+            maxTokens: 444
           }
         }
       },

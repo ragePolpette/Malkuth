@@ -155,6 +155,19 @@ Local fields to set when you want live agents instead of heuristics:
 - `agentRuntime.providers["codex-cli"].workingDirectory`
 - `agentRuntime.providers["codex-cli"].timeoutMs`
 - `agentRuntime.providers["codex-cli"].env`
+- `agentRuntime.providers.openai.model`
+- `agentRuntime.providers.openai.baseUrl`
+- `agentRuntime.providers.openai.apiKeyEnvVar`
+- `agentRuntime.providers.openai.timeoutMs`
+- `agentRuntime.providers.openai.maxTokens`
+- `agentRuntime.providers.ollama.model`
+- `agentRuntime.providers.ollama.baseUrl`
+- `agentRuntime.providers.ollama.timeoutMs`
+- `agentRuntime.providers.ollama.maxTokens`
+- `agentRuntime.providers.lmstudio.model`
+- `agentRuntime.providers.lmstudio.baseUrl`
+- `agentRuntime.providers.lmstudio.timeoutMs`
+- `agentRuntime.providers.lmstudio.maxTokens`
 
 `codex-cli` is the recommended local test provider.
 
@@ -166,6 +179,35 @@ Wrapper contract:
 - branch on `EXODIA_AGENT_RUNTIME_PHASE`
 
 Keep provider credentials and wrapper paths only in local untracked config.
+
+Ready local wrapper:
+
+- `command = "node"`
+- `args = ["./scripts/agent-runtime-codex-wrapper.mjs"]`
+
+Useful codex wrapper env keys:
+
+- `EXODIA_CODEX_COMMAND = codex`
+- `EXODIA_CODEX_MODEL = <optional model>`
+- `EXODIA_CODEX_PROFILE = <optional codex profile>`
+- `EXODIA_CODEX_SANDBOX = read-only | workspace-write`
+- `EXODIA_CODEX_USE_OSS = true | false`
+- `EXODIA_CODEX_LOCAL_PROVIDER = ollama | lmstudio`
+- `EXODIA_CODEX_TIMEOUT_MS = <milliseconds>`
+
+Recommended local profile split:
+
+- `config/local/harness.agent.codex.local.json`
+- `config/local/harness.agent.openai.local.json`
+- `config/local/harness.agent.ollama.local.json`
+
+For `ollama`:
+
+- keep `agentRuntime.provider = "ollama"`
+- keep the default `baseUrl = "http://127.0.0.1:11434/v1"` unless your daemon listens elsewhere
+- set `agentRuntime.providers.ollama.model` to an installed local model such as `qwen3-coder:30b`
+- keep `agentRuntime.providers.ollama.maxTokens` conservative during local tests
+- start the local server before the run, otherwise the agent runtime will fail fast and invalidate the run
 
 ## Logging Locale
 

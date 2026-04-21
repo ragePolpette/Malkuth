@@ -237,27 +237,34 @@ export class TriageAgent {
     };
   }
 
-  shouldRequestClarification(ticket, decision, analysis) {
+  resolveClarificationMode(ticket, decision, analysis) {
     if (!this.interactionService?.isEnabledForPhase("triage")) {
-      return false;
+      return null;
     }
 
     if (ticket.interactionState?.status === "awaiting_response") {
-      return false;
+      return null;
     }
 
-    if (analysis?.status === "needs_human" || (analysis?.questions?.length ?? 0) > 0) {
-      return true;
+    const blockingQuestions = (analysis?.questions ?? []).filter((question) => question?.blocking !== false);
+    const advisoryQuestions = (analysis?.questions ?? []).filter((question) => question?.blocking === false);
+
+    if (analysis?.status === "needs_human" || blockingQuestions.length > 0) {
+      return "blocking";
     }
 
     if (decision.status_decision === "feasible_low_confidence") {
-      return true;
+      return "blocking";
     }
 
-    return (
+    if (
       decision.status_decision === "blocked" &&
       (decision.product_target === "unknown" || decision.repo_target === "UNKNOWN")
-    );
+    ) {
+      return "blocking";
+    }
+
+    return advisoryQuestions.length > 0 ? "nonblocking" : null;
   }
 
   buildClarificationQuestion(ticket, mapping, decision, analysis) {
@@ -319,12 +326,14 @@ export class TriageAgent {
         memoryByTicket
       });
 
-      if (this.shouldRequestClarification(ticket, decision, analysis)) {
+      const clarificationMode = this.resolveClarificationMode(ticket, decision, analysis);
+      if (clarificationMode) {
         const interaction = await this.interactionService.requestClarification({
           phase: "triage",
           ticket,
           question: this.buildClarificationQuestion(ticket, mapping, decision, analysis),
           reason: decision.short_reason,
+          blocking: clarificationMode === "blocking",
           context: {
             productTarget: decision.product_target,
             repoTarget: decision.repo_target,
@@ -333,7 +342,7 @@ export class TriageAgent {
           }
         });
 
-        if (interaction) {
+        if (interaction && clarificationMode === "blocking") {
           const markers = buildInteractionMarkers(interaction.id);
           decision = {
             ...decision,

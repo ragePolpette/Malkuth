@@ -176,9 +176,11 @@ export class HttpAgentRuntimeAdapter extends AgentRuntimeAdapter {
   }
 
   buildRequestBody(phase, input) {
+    const providerConfig = this.getProviderConfig();
     return {
       model: this.model,
-      temperature: this.getProviderConfig().temperature ?? 0,
+      temperature: providerConfig.temperature ?? 0,
+      max_tokens: providerConfig.maxTokens ?? 2000,
       response_format: this.normalizeResponseFormat(),
       messages: [
         {

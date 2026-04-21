@@ -131,6 +131,7 @@ export function createInteractionRecord({
   question,
   reason,
   destinations,
+  blocking = true,
   context = {}
 }) {
   const now = new Date().toISOString();
@@ -140,6 +141,7 @@ export function createInteractionRecord({
     projectKey: ticket.projectKey ?? "UNKNOWN",
     phase,
     status: "awaiting_response",
+    blocking,
     question,
     reason,
     destinations,
@@ -159,6 +161,7 @@ export function normalizeInteractionRecord(record = {}) {
     projectKey: `${record.projectKey ?? record.project_key ?? "UNKNOWN"}`.trim() || "UNKNOWN",
     phase: `${record.phase ?? "triage"}`.trim() || "triage",
     status: normalizeInteractionStatus(record.status),
+    blocking: record.blocking !== false,
     question: `${record.question ?? ""}`.trim(),
     reason: `${record.reason ?? ""}`.trim(),
     destinations: normalizeInteractionDestinations(record.destinations),

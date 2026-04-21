@@ -165,3 +165,79 @@ test("analysis runtime can drive clarification requests through the existing int
     "What exact user flow reproduces the failure after profile save?"
   );
 });
+
+test("non-blocking analysis questions do not block triage but remain available for a later run", async () => {
+  const { workspace, configPath } = await createScenario({
+    mode: "triage-only",
+    dryRun: true,
+    memory: {
+      backend: "file",
+      filePath: "./memory.json"
+    },
+    agentRuntime: {
+      enabled: true,
+      provider: "codex-cli",
+      artifactFile: "./agent-artifacts.json",
+      enabledPhases: ["analysis"],
+      providers: {
+        "codex-cli": {
+          command: process.execPath,
+          args: [
+            "-e",
+            "let data='';process.stdin.on('data',c=>data+=c);process.stdin.on('end',()=>{const req=JSON.parse(data);process.stdout.write(JSON.stringify({status:'proposal_ready',summary:'Advisory question only',feasibility:'feasible',confidence:0.9,productTarget:'public-app',repoTarget:'public-web',area:'portal',proposedFix:{summary:'Inspect portal calculation',steps:['Trace calculation path']},verificationPlan:{summary:'Run portal checks',checks:['npm test'],successCriteria:['issue fixed']},questions:[{reason:'nice_to_have',question:'Can you share one mismatching example?',blocking:false}]}));});"
+          ],
+          timeoutMs: 5000
+        }
+      }
+    },
+    interaction: {
+      enabled: true,
+      mode: "deferred",
+      storeFile: "./interactions.json",
+      destinations: ["ticket"],
+      allowedPhases: ["triage"],
+      maxQuestionsPerTicket: 1,
+      transports: {
+        ticket: {
+          enabled: true,
+          commentPrefix: "[Exodia]"
+        },
+        slack: {
+          enabled: false,
+          server: "",
+          postAction: "",
+          collectRepliesAction: "",
+          channel: "",
+          channelsByPhase: {}
+        }
+      }
+    },
+    execution: {
+      baseBranch: "main",
+      allowRealPrs: false
+    },
+    mockTickets: [
+      {
+        key: "GEN-803",
+        projectKey: "GEN",
+        summary: "Dashboard total differs from export",
+        contextMapping: {
+          inScope: true,
+          productTarget: "public-app",
+          repoTarget: "public-web",
+          area: "dashboard",
+          feasibility: "feasible",
+          confidence: 0.86
+        }
+      }
+    ]
+  });
+
+  const summary = await runHarness({ configPath, modeOverride: "triage-only", dryRunOverride: true });
+  const interactions = JSON.parse(await readFile(path.join(workspace, "interactions.json"), "utf8"));
+
+  assert.equal(summary.triage[0].status_decision, "feasible");
+  assert.equal(interactions.length, 1);
+  assert.equal(interactions[0].status, "awaiting_response");
+  assert.equal(interactions[0].blocking, false);
+});

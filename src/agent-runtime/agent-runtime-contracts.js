@@ -133,6 +133,7 @@ export function normalizeAgentRuntimeConfig(config = {}) {
         baseUrl: `${config.providers?.openai?.baseUrl ?? "https://api.openai.com/v1"}`.trim(),
         apiKeyEnvVar: `${config.providers?.openai?.apiKeyEnvVar ?? "OPENAI_API_KEY"}`.trim() || "OPENAI_API_KEY",
         timeoutMs: Math.max(1000, Number(config.providers?.openai?.timeoutMs ?? 120000) || 120000),
+        maxTokens: Math.max(1, Number(config.providers?.openai?.maxTokens ?? 2000) || 2000),
         temperature: Number(config.providers?.openai?.temperature ?? 0)
       },
       claude: {
@@ -155,6 +156,7 @@ export function normalizeAgentRuntimeConfig(config = {}) {
         siteUrl: `${config.providers?.openrouter?.siteUrl ?? ""}`.trim(),
         siteName: `${config.providers?.openrouter?.siteName ?? ""}`.trim(),
         timeoutMs: Math.max(1000, Number(config.providers?.openrouter?.timeoutMs ?? 120000) || 120000),
+        maxTokens: Math.max(1, Number(config.providers?.openrouter?.maxTokens ?? 2000) || 2000),
         temperature: Number(config.providers?.openrouter?.temperature ?? 0)
       },
       ollama: {
@@ -164,6 +166,7 @@ export function normalizeAgentRuntimeConfig(config = {}) {
         baseUrl: `${config.providers?.ollama?.baseUrl ?? "http://127.0.0.1:11434/v1"}`.trim(),
         apiKeyEnvVar: `${config.providers?.ollama?.apiKeyEnvVar ?? ""}`.trim(),
         timeoutMs: Math.max(1000, Number(config.providers?.ollama?.timeoutMs ?? 120000) || 120000),
+        maxTokens: Math.max(1, Number(config.providers?.ollama?.maxTokens ?? 1200) || 1200),
         temperature: Number(config.providers?.ollama?.temperature ?? 0)
       },
       lmstudio: {
@@ -173,6 +176,7 @@ export function normalizeAgentRuntimeConfig(config = {}) {
         baseUrl: `${config.providers?.lmstudio?.baseUrl ?? "http://127.0.0.1:1234/v1"}`.trim(),
         apiKeyEnvVar: `${config.providers?.lmstudio?.apiKeyEnvVar ?? ""}`.trim(),
         timeoutMs: Math.max(1000, Number(config.providers?.lmstudio?.timeoutMs ?? 120000) || 120000),
+        maxTokens: Math.max(1, Number(config.providers?.lmstudio?.maxTokens ?? 2000) || 2000),
         temperature: Number(config.providers?.lmstudio?.temperature ?? 0)
       }
     }

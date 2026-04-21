@@ -171,6 +171,25 @@ The runtime passes a payload shaped like this:
 
 For a local codex-driven setup, configure `agentRuntime.provider = "codex-cli"` in an untracked config and point `agentRuntime.providers["codex-cli"].command` to your wrapper.
 
+This repository includes a ready wrapper at [scripts/agent-runtime-codex-wrapper.mjs](./scripts/agent-runtime-codex-wrapper.mjs).
+
+Recommended local wiring:
+
+- `command = "node"`
+- `args = ["./scripts/agent-runtime-codex-wrapper.mjs"]`
+- `env.EXODIA_CODEX_COMMAND = "codex"`
+- optional `env.EXODIA_CODEX_MODEL`
+- optional `env.EXODIA_CODEX_USE_OSS = "true"` plus `env.EXODIA_CODEX_LOCAL_PROVIDER = "ollama" | "lmstudio"`
+
+For direct API runs, switch the untracked config to `agentRuntime.provider = "openai"` and set the API key only in the launcher session or dashboard, never in repo files.
+
+For local HTTP-compatible runs, you can switch to `agentRuntime.provider = "ollama"` or `agentRuntime.provider = "lmstudio"` in an untracked config:
+
+- `ollama` defaults to `http://127.0.0.1:11434/v1`
+- `lmstudio` defaults to `http://127.0.0.1:1234/v1`
+- both expect a locally running server and an installed model name in the provider config
+- for preliminary local tests, cap `maxTokens` in the provider config so slow local models do not stall the whole run
+
 ## Configuration
 
 Publishable example configs:

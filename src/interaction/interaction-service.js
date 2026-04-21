@@ -93,7 +93,7 @@ export class InteractionService {
     return records.filter((record) => record.status === "awaiting_response");
   }
 
-  async requestClarification({ phase, ticket, question, reason, context = {} }) {
+  async requestClarification({ phase, ticket, question, reason, blocking = true, context = {} }) {
     if (!this.isEnabledForPhase(phase)) {
       return null;
     }
@@ -126,6 +126,7 @@ export class InteractionService {
       question,
       reason,
       destinations,
+      blocking,
       context
     });
     const message = this.formatQuestionMessage(interaction, ticket);
@@ -323,10 +324,14 @@ export class InteractionService {
       const responses = sortInteractionResponses(await this.collectResponses(ticket, interaction));
       if (responses.length === 0) {
         pending.push(interaction);
-        preparedTickets.push({
-          ...ticket,
-          interactionState: this.buildPendingInteractionState(interaction)
-        });
+        preparedTickets.push(
+          interaction.blocking
+            ? {
+                ...ticket,
+                interactionState: this.buildPendingInteractionState(interaction)
+              }
+            : ticket
+        );
         continue;
       }
 

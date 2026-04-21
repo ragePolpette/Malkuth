@@ -29,6 +29,7 @@ test("openai runtime provider sends an authorized chat completion request and pa
 
     const payload = JSON.parse(body);
     assert.equal(payload.model, "gpt-5.2");
+    assert.equal(payload.max_tokens, 321);
     assert.equal(payload.response_format.type, "json_object");
     assert.equal(payload.messages[0].role, "system");
     assert.equal(payload.messages[1].role, "user");
@@ -77,7 +78,8 @@ test("openai runtime provider sends an authorized chat completion request and pa
             baseUrl,
             apiKeyEnvVar: "OPENAI_API_KEY",
             endpoint: "/chat/completions",
-            timeoutMs: 5000
+            timeoutMs: 5000,
+            maxTokens: 321
           }
         }
       },

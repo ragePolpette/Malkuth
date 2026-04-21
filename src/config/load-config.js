@@ -148,7 +148,46 @@ const defaultConfig = {
         responseFormat: "json",
         baseUrl: "",
         apiKeyEnvVar: "OPENAI_API_KEY",
-        timeoutMs: 120000
+        timeoutMs: 120000,
+        maxTokens: 2000
+      },
+      claude: {
+        model: "",
+        baseUrl: "",
+        endpoint: "/messages",
+        apiKeyEnvVar: "ANTHROPIC_API_KEY",
+        anthropicVersion: "2023-06-01",
+        timeoutMs: 120000,
+        maxTokens: 2000
+      },
+      openrouter: {
+        model: "",
+        responseFormat: "json",
+        baseUrl: "https://openrouter.ai/api/v1",
+        endpoint: "/chat/completions",
+        apiKeyEnvVar: "OPENROUTER_API_KEY",
+        siteUrl: "",
+        siteName: "",
+        timeoutMs: 120000,
+        maxTokens: 2000
+      },
+      ollama: {
+        model: "",
+        responseFormat: "json",
+        baseUrl: "http://127.0.0.1:11434/v1",
+        endpoint: "/chat/completions",
+        apiKeyEnvVar: "",
+        timeoutMs: 120000,
+        maxTokens: 1200
+      },
+      lmstudio: {
+        model: "",
+        responseFormat: "json",
+        baseUrl: "http://127.0.0.1:1234/v1",
+        endpoint: "/chat/completions",
+        apiKeyEnvVar: "",
+        timeoutMs: 120000,
+        maxTokens: 2000
       }
     }
   },

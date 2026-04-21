@@ -167,3 +167,56 @@ test("the next run resolves the first response and prefers Slack over later tick
   assert.equal(storedInteractions[0].status, "resolved");
   assert.equal(storedInteractions[0].response.source, "slack");
 });
+
+test("a non-blocking interaction response is integrated on the next run without pausing the first run", async () => {
+  const workspace = await mkdtemp(path.join(os.tmpdir(), "exodia-interaction-advisory-"));
+  const configPath = path.join(workspace, "harness.config.json");
+  const interactionStorePath = path.join(workspace, "interactions.json");
+  const config = createBaseConfig(workspace);
+
+  config.mcpBridge.fixtures = {};
+  await writeConfig(configPath, config);
+  await writeFile(
+    interactionStorePath,
+    JSON.stringify([
+      {
+        id: "advisory-1",
+        ticketKey: "GEN-701",
+        projectKey: "GEN",
+        phase: "triage",
+        status: "awaiting_response",
+        blocking: false,
+        question: "Can you share one mismatching example?",
+        reason: "advisory clarification",
+        destinations: ["ticket"],
+        createdAt: "2099-03-27T09:00:00.000Z",
+        updatedAt: "2099-03-27T09:00:00.000Z",
+        transportState: {}
+      }
+    ], null, 2)
+  );
+
+  config.mockTickets[0].interactionResponses = [
+    {
+      id: "jira-reply-advisory",
+      text: "For March 2026 the dashboard shows 1200 while the export shows 980.",
+      author: "jira-user",
+      respondedAt: "2099-03-27T10:00:00.000Z"
+    }
+  ];
+  await writeConfig(configPath, config);
+
+  const summary = await runHarness({
+    configPath,
+    modeOverride: "triage-only",
+    dryRunOverride: true
+  });
+
+  assert.equal(summary.interactionStats.pending, 0);
+  assert.equal(summary.interactionStats.resolved, 1);
+  assert.match(summary.triage[0].clarification_summary, /dashboard shows 1200 while the export shows 980/i);
+
+  const storedInteractions = JSON.parse(await readFile(interactionStorePath, "utf8"));
+  assert.equal(storedInteractions[0].status, "resolved");
+  assert.equal(storedInteractions[0].blocking, false);
+});
